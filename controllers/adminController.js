@@ -1,31 +1,34 @@
 const MBTIQuestion = require("../models/MBTIQuestion");
 
+// ================= CREATE MBTI QUESTION(S) =================
 exports.createMBTIQuestion = async (req, res) => {
-  console.log("🔥 ADMIN CONTROLLER HIT");
-  console.log("REQ BODY:", req.body);
-
   try {
-    const { question, options } = req.body;
+    let questions = req.body.questions || req.body;
 
-    if (!question || !options || !Array.isArray(options)) {
-      return res.status(400).json({
-        message: "Question and options array required",
-      });
+    // Case 1: single question → convert to array
+    if (!Array.isArray(questions)) {
+      questions = [questions];
     }
 
-    const newQuestion = await MBTIQuestion.create({
-      question,
-      options,
-    });
+    // Validate each question
+    for (const q of questions) {
+      if (!q.question || !Array.isArray(q.options)) {
+        return res.status(400).json({
+          message: "Each question must have question text and options array",
+        });
+      }
+    }
 
-    console.log("✅ QUESTION CREATED:", newQuestion._id);
+    // Insert as separate documents
+    const savedQuestions = await MBTIQuestion.insertMany(questions);
 
-    return res.status(201).json({
-      message: "MBTI question created successfully",
-      data: newQuestion,
+    res.status(201).json({
+      message: "MBTI question(s) created successfully",
+      count: savedQuestions.length,
+      questions: savedQuestions,
     });
   } catch (error) {
-    console.error("❌ ADMIN ERROR:", error.message);
-    return res.status(500).json({ message: error.message });
+    console.error("❌ ADMIN CREATE QUESTION ERROR:", error);
+    res.status(500).json({ message: error.message });
   }
 };
