@@ -81,3 +81,47 @@ exports.getMatchedJobs = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+// ================= CREATE JOB (COMPANY) =================
+exports.createJob = async (req, res) => {
+  try {
+    if (req.user.role !== "company") {
+      return res.status(403).json({ message: "Only companies can post jobs" });
+    }
+
+    const {
+      title,
+      company,
+      description,
+      skills,
+      location,
+      jobType,
+      preferredMBTI,
+    } = req.body;
+
+    if (!title || !company) {
+      return res
+        .status(400)
+        .json({ message: "Title and company are required" });
+    }
+
+    const job = await JobPost.create({
+      title,
+      company,
+      description,
+      skills,
+      location,
+      jobType,
+      preferredMBTI,
+      createdBy: req.user._id,
+      status: "pending",
+    });
+
+    res.status(201).json({
+      message: "Job created successfully. Waiting for admin approval.",
+      job,
+    });
+  } catch (error) {
+    console.error("❌ CREATE JOB ERROR:", error);
+    res.status(500).json({ message: error.message });
+  }
+};

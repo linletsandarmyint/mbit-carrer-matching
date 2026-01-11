@@ -6,10 +6,21 @@ const jobPostSchema = new mongoose.Schema(
     company: { type: String, required: true },
     description: { type: String },
     skills: [{ type: String }],
-    location: { type: String }, // optional
-    jobType: { type: String }, // Full-time, Part-time, Remote
-    preferredMBTI: [{ type: String }], // ["INTJ", "INFJ", etc.]
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    location: { type: String },
+    jobType: { type: String },
+    preferredMBTI: [{ type: String }],
+
+    // 🔐 Workflow fields
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
   },
   { timestamps: true }
 );
