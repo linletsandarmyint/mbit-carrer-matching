@@ -35,3 +35,11 @@ exports.protect = async (req, res, next) => {
   console.log("❌ NO TOKEN");
   return res.status(401).json({ message: "No token provided" });
 };
+exports.authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+    next();
+  };
+};

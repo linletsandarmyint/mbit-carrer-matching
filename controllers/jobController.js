@@ -20,11 +20,24 @@ const calculateMBTIMatchScore = (userMBTI, jobMBTIs = []) => {
 
   return bestScore;
 };
+// GET /api/jobs/my
+exports.getMyJobs = async (req, res) => {
+  try {
+    if (req.user.role !== "company") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const jobs = await JobPost.find({ createdBy: req.user._id });
+    res.status(200).json(jobs);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 // ================= GET ALL JOBS =================
 exports.getJobs = async (req, res) => {
   try {
-    const jobs = await JobPost.find();
+    const jobs = await JobPost.find({status:"approved"});
     res.status(200).json(jobs);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -46,8 +59,8 @@ exports.getMatchedJobs = async (req, res) => {
       return res.status(400).json({ message: "Complete MBTI test first" });
     }
 
-    // 3️⃣ Fetch jobs
-    const jobs = await JobPost.find();
+    // Only approved jobs
+    const jobs = await JobPost.find({ status: "approved" });
 
     // 4️⃣ Calculate match score and label
     const matchedJobs = jobs
@@ -122,6 +135,37 @@ exports.createJob = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ CREATE JOB ERROR:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+// ================= APPROVE JOB =================
+exports.approveJob = async (req, res) => {
+  try {
+    const job = await JobPost.findById(req.params.id);
+    if (!job) return res.status(404).json({ message: "Job not found" });
+
+    job.status = "approved"; // update status
+    await job.save();
+
+    res.status(200).json({ message: "Job approved successfully", job });
+  } catch (error) {
+    console.error("❌ APPROVE JOB ERROR:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ================= REJECT JOB =================
+exports.rejectJob = async (req, res) => {
+  try {
+    const job = await JobPost.findById(req.params.id);
+    if (!job) return res.status(404).json({ message: "Job not found" });
+
+    job.status = "rejected"; // update status
+    await job.save();
+
+    res.status(200).json({ message: "Job rejected successfully", job });
+  } catch (error) {
+    console.error("❌ REJECT JOB ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };
