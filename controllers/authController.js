@@ -21,14 +21,14 @@ exports.register = async (req, res) => {
     }
 
     // Hash the password before saving
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    // const salt = await bcrypt.genSalt(10);
+    // const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create user with hashed password
     const user = await User.create({
       name,
       email,
-      password: hashedPassword,
+      password,
       role,
     });
 
@@ -62,9 +62,11 @@ exports.login = async (req, res) => {
     }
 
     // 2. Compare hashed password
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await user.matchPassword(password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid email or password" });
+      return res
+        .status(400)
+        .json({ message: "smth Invalid email or password" });
     }
 
     // 3. Success response with JWT token
