@@ -14,7 +14,28 @@ exports.getQuestions = async (req, res) => {
 // Submit MBTI answers and calculate type
 exports.submitAnswers = async (req, res) => {
   try {
+    const user = req.user; // ✅ get user from auth middleware
+
     let { answers } = req.body; // answers can be array of strings or objects
+
+    // ⏰ 1 hour in milliseconds
+    const ONE_HOUR = 60 * 60 * 1000;
+
+    // 1️⃣ Prevent retake within 1 hour
+    if (user.mbtiLastTestAt) {
+      const now = Date.now();
+      const lastTest = new Date(user.mbtiLastTestAt).getTime();
+
+      if (now - lastTest < ONE_HOUR) {
+        const remainingMinutes = Math.ceil(
+          (ONE_HOUR - (now - lastTest)) / 60000
+        );
+
+        return res.status(400).json({
+          message: `You can retake the MBTI test after ${remainingMinutes} minutes`,
+        });
+      }
+    }
 
     if (!answers || !Array.isArray(answers)) {
       return res.status(400).json({ message: "Invalid answers" });
@@ -42,12 +63,10 @@ exports.submitAnswers = async (req, res) => {
       (counts.T >= counts.F ? "T" : "F") +
       (counts.J >= counts.P ? "J" : "P");
 
-    // 🔥 SAVE MBTI TO USER PROFILE
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      { mbtiType },
-      { new: true }
-    );
+    // 🔥 Save MBTI and last test time
+    user.mbtiType = mbtiType;
+    user.mbtiLastTestAt = new Date();
+    await user.save();
 
     res.status(200).json({ message: "MBTI calculated", mbtiType, counts });
   } catch (error) {

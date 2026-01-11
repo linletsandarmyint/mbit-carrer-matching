@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema(
       default: "jobseeker",
     },
     mbtiType: { type: String, default: null },
+    mbtiLastTestAt: { type: Date, default: null }, // <--- Add this
   },
   { timestamps: true }
 );
