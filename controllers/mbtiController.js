@@ -42,6 +42,13 @@ exports.submitAnswers = async (req, res) => {
       (counts.T >= counts.F ? "T" : "F") +
       (counts.J >= counts.P ? "J" : "P");
 
+    // 🔥 SAVE MBTI TO USER PROFILE
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { mbtiType },
+      { new: true }
+    );
+
     res.status(200).json({ message: "MBTI calculated", mbtiType, counts });
   } catch (error) {
     console.error("❌ MBTI SUBMIT ERROR:", error);
